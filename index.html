@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Executive Action Copilot — AIONOS</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --card-hover: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-subtle: #64748b;
+      
+      --blue: #2563eb;
+      --blue-subtle: #eff6ff;
+      --blue-border: #bfdbfe;
+      
+      --red: #dc2626;
+      --red-subtle: #fef2f2;
+      --red-border: #fecaca;
+      
+      --amber: #d97706;
+      --amber-subtle: #fffbeb;
+      --amber-border: #fde68a;
+      
+      --green: #059669;
+      --green-subtle: #ecfdf5;
+      --green-border: #a7f3d0;
+
+      --orange: #ea580c;
+      --orange-subtle: #fff7ed;
+      --orange-border: #fed7aa;
+
+      --radius: 8px;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 60px;
+    }
+
+    /* Top Bar */
+    header {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      padding: 12px 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .brand-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .brand-user {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* Day selector pills */
+    .day-selector {
+      display: flex;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border);
+      gap: 3px;
+    }
+
+    .day-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .day-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.6); }
+    .day-btn.active {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Main Container */
+    .app-container {
+      max-width: 1100px;
+      margin: 24px auto 0;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ========================================================= */
+    /* 2. PROCESSING MODE (Live Compact Agent Pipeline Stepper)   */
+    /* ========================================================= */
+    .processing-bar {
+      display: none;
+      background: var(--blue-subtle);
+      border: 1px solid var(--blue-border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.8rem;
+      overflow-x: auto;
+    }
+
+    .processing-bar.active {
+      display: flex;
+    }
+
+    .processing-title {
+      font-weight: 700;
+      color: var(--blue);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--blue);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .pipeline-steps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      color: var(--text-subtle);
+    }
+
+    .pipe-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      color: #64748b;
+    }
+
+    .pipe-step.done { color: var(--text-muted); }
+    .pipe-step.current { color: var(--blue); font-weight: 700; }
+    .pipe-arrow { color: #cbd5e1; }
+
+    /* ========================================================= */
+    /* 1. SHOW MODE (Today's Executive Brief & Simple Cards)     */
+    /* ========================================================= */
+    .brief-summary-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brief-top-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .brief-heading {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .schedule-snippet {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sched-tag {
+      background: #f1f5f9;
+      border: 1px solid var(--card-border);
+      padding: 3px 8px;
+      border-radius: 4px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* KPI Summary Strip */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .kpi-chip {
+      background: #f8fafc;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .kpi-chip:hover {
+      border-color: #cbd5e1;
+      background: #ffffff;
+    }
+
+    .kpi-chip.active {
+      border-color: var(--blue);
+      background: var(--blue-subtle);
+    }
+
+    .kpi-chip-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .kpi-chip-count {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    .c-red { color: var(--red); }
+    .c-amber { color: var(--amber); }
+    .c-blue { color: var(--blue); }
+    .c-green { color: var(--green); }
+
+    /* Q&A Section */
+    .qa-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .qa-input-wrap {
+      display: flex;
+      gap: 8px;
+    }
+
+    .qa-input-wrap input {
+      flex: 1;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 11px 16px;
+      font-size: 0.9rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .qa-input-wrap input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .qa-input-wrap input::placeholder {
+      color: #94a3b8;
+    }
+
+    .qa-submit-btn {
+      background: var(--blue);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      padding: 0 22px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .qa-submit-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .qa-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .q-chip {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #1e40af;
+      font-size: 0.76rem;
+      font-weight: 500;
+      padding: 4px 11px;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .q-chip:hover {
+      background: #e0e7ff;
+      border-color: #c7d2fe;
+      color: #1e3a8a;
+    }
+
+    .qa-box-answer {
+      display: none;
+      margin-top: 10px;
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      border-left: 4px solid var(--blue);
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    /* Filter segmented tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab-pill {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.84rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .tab-pill:hover { color: var(--text); background: #f1f5f9; }
+    .tab-pill.active {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .tab-counter {
+      font-size: 0.72rem;
+      background: #cbd5e1;
+      color: #1e293b;
+      padding: 1px 7px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+
+    .tab-pill.active .tab-counter {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    /* Cards in Show Mode */
+    .actions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .show-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.15s;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .show-card:hover {
+      background: #fbfcfe;
+      border-color: #cbd5e1;
+      box-shadow: var(--shadow-md);
+    }
+
+    .show-card.urgent-border {
+      border-left: 4px solid var(--red);
+    }
+
+    .show-card.today-border {
+      border-left: 4px solid var(--amber);
+    }
+
+    .card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .action-name {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Status Badges */
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .b-overdue { background: var(--red-subtle); color: var(--red); border: 1px solid var(--red-border); }
+    .b-duetoday { background: var(--amber-subtle); color: var(--amber); border: 1px solid var(--amber-border); }
+    .b-upcoming { background: var(--blue-subtle); color: var(--blue); border: 1px solid var(--blue-border); }
+    .b-completed { background: var(--green-subtle); color: var(--green); border: 1px solid var(--green-border); }
+    .b-unclear { background: var(--orange-subtle); color: var(--orange); border: 1px solid var(--orange-border); }
+
+    .card-meta-line {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .meta-item strong { color: var(--text); font-weight: 600; }
+
+    .btn-evidence {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #1e40af;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .btn-evidence:hover {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+
+    /* ========================================================= */
+    /* 3. EVIDENCE MODE (Detailed Drawer for Selected Action)    */
+    /* ========================================================= */
+    .evidence-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      justify-content: flex-end;
+    }
+
+    .evidence-modal.active {
+      display: flex;
+    }
+
+    .evidence-panel {
+      background: #ffffff;
+      width: 100%;
+      max-width: 580px;
+      height: 100%;
+      border-left: 1px solid var(--card-border);
+      padding: 28px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: -4px 0 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .evidence-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 14px;
+      gap: 12px;
+    }
+
+    .evidence-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .btn-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0 6px;
+      line-height: 1;
+    }
+
+    .btn-close:hover {
+      color: var(--text);
+    }
+
+    .ev-section-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+
+    .ev-box {
+      background: #f8fafc;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 14px;
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .ev-box.risk {
+      border-color: var(--red-border);
+      background: var(--red-subtle);
+      color: #991b1b;
+    }
+
+    .citation-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .citation-item {
+      background: #f8fafc;
+      border-left: 3px solid var(--blue);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .cit-source {
+      color: #1e40af;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .cit-quote {
+      color: #1e293b;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header>
+    <div class="nav-container">
+      <div class="brand-group">
+        <div class="brand-name">Executive Action Copilot</div>
+        <div class="brand-user">Arjun Malhotra &middot; VP Sales</div>
+      </div>
+
+      <div class="day-selector" id="dayPills">
+        <button class="day-btn" onclick="switchDate('2026-09-21')">Mon 21</button>
+        <button class="day-btn" onclick="switchDate('2026-09-22')">Tue 22</button>
+        <button class="day-btn" onclick="switchDate('2026-09-23')">Wed 23</button>
+        <button class="day-btn" onclick="switchDate('2026-09-24')">Thu 24</button>
+        <button class="day-btn active" onclick="switchDate('2026-09-25')">Fri 25 Sep</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-container">
+
+    <!-- ========================================================= -->
+    <!-- 2. PROCESSING MODE (Agent Activity Live Stepper)           -->
+    <!-- ========================================================= -->
+    <div class="processing-bar" id="processingBar">
+      <div class="processing-title">
+        <span class="pulse-dot"></span>
+        <span>Agent Activity</span>
+      </div>
+      <div class="pipeline-steps">
+        <span class="pipe-step done" id="pStep1">Reading Sources</span>
+        <span class="pipe-arrow">&rarr;</span>
+        <span class="pipe-step done" id="pStep2">Extracting</span>
+        <span class="pipe-arrow">&rarr;</span>
+        <span class="pipe-step done" id="pStep3">Deduplicating</span>
+        <span class="pipe-arrow">&rarr;</span>
+        <span class="pipe-step done" id="pStep4">Reconciling</span>
+        <span class="pipe-arrow">&rarr;</span>
+        <span class="pipe-step done" id="pStep5">Checking Ownership</span>
+        <span class="pipe-arrow">&rarr;</span>
+        <span class="pipe-step current" id="pStep6">Preparing Brief</span>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 1. SHOW MODE (Today's Executive Brief & Simple Cards)     -->
+    <!-- ========================================================= -->
+    <section class="brief-summary-box">
+      <div class="brief-top-line">
+        <div class="brief-heading" id="briefHeading">Today's Brief &middot; Friday, 25 September 2026</div>
+        <div class="schedule-snippet" id="scheduleSnippet">
+          <span style="color:var(--text-subtle);">Today's Schedule:</span>
+          <span class="sched-tag">10:00–10:30 AM: Facilities Check-in</span>
+          <span class="sched-tag">1:00–2:00 PM: Blocked</span>
+        </div>
+      </div>
+
+      <!-- Scannable KPI Summary Strip -->
+      <div class="kpi-strip">
+        <div class="kpi-chip active" id="kpiAttention" onclick="setTab('needs_attention')">
+          <span class="kpi-chip-title">Needs Attention</span>
+          <span class="kpi-chip-count c-red" id="kpiAttentionNum">2</span>
+        </div>
+        <div class="kpi-chip" id="kpiMyActions" onclick="setTab('my_actions')">
+          <span class="kpi-chip-title">My Actions</span>
+          <span class="kpi-chip-count c-blue" id="kpiMyActionsNum">3</span>
+        </div>
+        <div class="kpi-chip" id="kpiWaiting" onclick="setTab('waiting')">
+          <span class="kpi-chip-title">Waiting on Others</span>
+          <span class="kpi-chip-count c-green" id="kpiWaitingNum">1</span>
+        </div>
+        <div class="kpi-chip" id="kpiUnclear" onclick="setTab('unclear')">
+          <span class="kpi-chip-title">Unclear Ownership</span>
+          <span class="kpi-chip-count c-amber" id="kpiUnclearNum">1</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Q&A Box -->
+    <section class="qa-section">
+      <div class="qa-input-wrap">
+        <input 
+          type="text" 
+          id="queryInput" 
+          placeholder="Ask Copilot (e.g. 'What did I promise Raghav?' or 'What needs action today?')..."
+          onkeydown="if(event.key === 'Enter') runQuery();"
+        />
+        <button class="qa-submit-btn" onclick="runQuery()">Ask</button>
+      </div>
+
+      <div class="qa-chips">
+        <span class="q-chip" onclick="askChip('What did I promise Raghav?')">What did I promise Raghav?</span>
+        <span class="q-chip" onclick="askChip('What needs action today?')">What needs action today?</span>
+        <span class="q-chip" onclick="askChip('What items have unclear ownership?')">What items have unclear ownership?</span>
+        <span class="q-chip" onclick="askChip('Did Divya send the expense report?')">Did Divya send the expense report?</span>
+        <span class="q-chip" onclick="askChip('What is overdue?')">What is overdue?</span>
+      </div>
+
+      <div class="qa-box-answer" id="qaBoxAnswer">
+        <div id="qaAnswerText" style="white-space:pre-wrap; line-height:1.5;"></div>
+        <button class="btn-evidence" style="margin-top:10px;" id="qaEvidenceBtn" onclick="openQaEvidence()">
+          View Evidence Sources &rarr;
+        </button>
+      </div>
+    </section>
+
+    <!-- Action Navigation Tabs -->
+    <section>
+      <div class="filter-tabs">
+        <button class="tab-pill active" id="tabNeedsAttention" onclick="setTab('needs_attention')">
+          <span>Needs Attention</span>
+          <span class="tab-counter" id="tabCountAttention">2</span>
+        </button>
+        <button class="tab-pill" id="tabMyActions" onclick="setTab('my_actions')">
+          <span>My Actions</span>
+          <span class="tab-counter" id="tabCountMyActions">3</span>
+        </button>
+        <button class="tab-pill" id="tabWaiting" onclick="setTab('waiting')">
+          <span>Waiting on Others</span>
+          <span class="tab-counter" id="tabCountWaiting">1</span>
+        </button>
+        <button class="tab-pill" id="tabUnclear" onclick="setTab('unclear')">
+          <span>Unclear Ownership</span>
+          <span class="tab-counter" id="tabCountUnclear">1</span>
+        </button>
+        <button class="tab-pill" id="tabAll" onclick="setTab('all')">
+          <span>All Items</span>
+          <span class="tab-counter" id="tabCountAll">5</span>
+        </button>
+      </div>
+
+      <!-- Action Cards in Clean Show Mode -->
+      <div class="actions-list" id="actionsList" style="margin-top:12px;">
+        <!-- Simple cards injected here -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 3. EVIDENCE MODE (Detailed Drawer for Selected Action)    -->
+  <!-- ========================================================= -->
+  <div class="evidence-modal" id="evidenceModal" onclick="if(event.target === this) closeEvidence();">
+    <div class="evidence-panel">
+      <div class="evidence-header">
+        <div>
+          <div class="evidence-title" id="evModalTitle">Action Evidence</div>
+          <div id="evModalBadges" style="margin-top:6px; display:flex; gap:6px;"></div>
+        </div>
+        <button class="btn-close" onclick="closeEvidence()">&times;</button>
+      </div>
+
+      <!-- Overview Box -->
+      <div>
+        <div class="ev-section-title">Key Details</div>
+        <div class="ev-box" id="evModalDetails"></div>
+      </div>
+
+      <!-- Progression History -->
+      <div>
+        <div class="ev-section-title">Progression &amp; Context</div>
+        <div class="ev-box" id="evModalSummary"></div>
+      </div>
+
+      <!-- Risk / Notice if any -->
+      <div id="evModalRiskWrap" style="display:none;">
+        <div class="ev-section-title" style="color:var(--red);">Risk Notice</div>
+        <div class="ev-box risk" id="evModalRisk"></div>
+      </div>
+
+      <!-- Source Citations -->
+      <div>
+        <div class="ev-section-title">Source Citations</div>
+        <div class="citation-list" id="evModalCitations"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentDate = '2026-09-25';
+    let briefData = null;
+    let currentTab = 'needs_attention';
+    let latestQaData = null;
+
+    function getBadge(status) {
+      if (status === 'Overdue') return `<span class="badge b-overdue">&bull; Overdue</span>`;
+      if (status === 'Due Today') return `<span class="badge b-duetoday">&bull; Due Today</span>`;
+      if (status === 'Completed') return `<span class="badge b-completed">&bull; Completed</span>`;
+      return `<span class="badge b-upcoming">&bull; Upcoming</span>`;
+    }
+
+    // Render simple action card in SHOW MODE
+    function renderShowCard(act) {
+      const isOverdue = act.urgency_status === 'Overdue';
+      const isDueToday = act.urgency_status === 'Due Today';
+      const isUnclear = act.ownership_category === 'Unclear Ownership';
+
+      let borderClass = '';
+      if (isOverdue) borderClass = 'urgent-border';
+      else if (isDueToday) borderClass = 'today-border';
+
+      return `
+        <div class="show-card ${borderClass}">
+          <div class="card-info">
+            <div class="card-title-row">
+              <span class="action-name">${act.title}</span>
+              ${isUnclear ? '<span class="badge b-unclear">Unclear Ownership</span>' : ''}
+              ${getBadge(act.urgency_status)}
+            </div>
+            <div class="card-meta-line">
+              <span class="meta-item"><strong>Who:</strong> ${act.owner}${act.counterparty ? ' &rarr; ' + act.counterparty : ''}</span>
+              <span class="meta-item"><strong>Deadline:</strong> ${act.reconciled_deadline_str}</span>
+              <span class="meta-item"><strong>Status:</strong> ${act.action_status}</span>
+            </div>
+          </div>
+          <button class="btn-evidence" onclick="openEvidence('${act.action_id}')">
+            View Evidence &rarr;
+          </button>
+        </div>
+      `;
+    }
+
+    function renderFeed() {
+      if (!briefData) return;
+
+      const listEl = document.getElementById('actionsList');
+      const all = [
+        ...briefData.my_actions,
+        ...briefData.waiting_on_others,
+        ...briefData.unclear_ownership,
+      ];
+
+      const uniqueActs = Array.from(new Map(all.map(a => [a.action_id, a])).values());
+
+      let filtered = [];
+      if (currentTab === 'needs_attention') {
+        filtered = uniqueActs.filter(a => 
+          a.urgency_status === 'Overdue' || 
+          a.urgency_status === 'Due Today' ||
+          a.ownership_category === 'Unclear Ownership'
+        );
+      } else if (currentTab === 'my_actions') {
+        filtered = briefData.my_actions;
+      } else if (currentTab === 'waiting') {
+        filtered = briefData.waiting_on_others;
+      } else if (currentTab === 'unclear') {
+        filtered = briefData.unclear_ownership;
+      } else {
+        filtered = uniqueActs;
+      }
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center; padding:28px; color:var(--text-subtle); font-size:0.88rem;">No items under this view.</div>`;
+      } else {
+        listEl.innerHTML = filtered.map(renderShowCard).join('');
+      }
+
+      // Update Tab Pill Styling
+      document.querySelectorAll('.tab-pill').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.kpi-chip').forEach(c => c.classList.remove('active'));
+
+      if (currentTab === 'needs_attention') {
+        document.getElementById('tabNeedsAttention').classList.add('active');
+        document.getElementById('kpiAttention').classList.add('active');
+      } else if (currentTab === 'my_actions') {
+        document.getElementById('tabMyActions').classList.add('active');
+        document.getElementById('kpiMyActions').classList.add('active');
+      } else if (currentTab === 'waiting') {
+        document.getElementById('tabWaiting').classList.add('active');
+        document.getElementById('kpiWaiting').classList.add('active');
+      } else if (currentTab === 'unclear') {
+        document.getElementById('tabUnclear').classList.add('active');
+        document.getElementById('kpiUnclear').classList.add('active');
+      } else {
+        document.getElementById('tabAll').classList.add('active');
+      }
+    }
+
+    function setTab(tabName) {
+      currentTab = tabName;
+      renderFeed();
+    }
+
+    // =========================================================
+    // 2. PROCESSING MODE SIMULATOR & FETCHER
+    // =========================================================
+    async function showProcessingMode() {
+      const bar = document.getElementById('processingBar');
+      bar.classList.add('active');
+
+      const steps = [
+        document.getElementById('pStep1'),
+        document.getElementById('pStep2'),
+        document.getElementById('pStep3'),
+        document.getElementById('pStep4'),
+        document.getElementById('pStep5'),
+        document.getElementById('pStep6'),
+      ];
+
+      // Quick visual step pulse
+      steps.forEach((s, idx) => {
+        setTimeout(() => {
+          steps.forEach(st => st.className = 'pipe-step done');
+          s.className = 'pipe-step current';
+        }, idx * 70);
+      });
+
+      // Keep visible for brief feedback then fade
+      setTimeout(() => {
+        bar.classList.remove('active');
+      }, 700);
+    }
+
+    async function switchDate(dateStr) {
+      currentDate = dateStr;
+      document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('onclick').includes(dateStr));
+      });
+
+      showProcessingMode();
+
+      try {
+        const res = await fetch(`/api/brief?date=${dateStr}`);
+        briefData = await res.json();
+
+        // Update Brief Header
+        document.getElementById('briefHeading').innerText = `Today's Brief &middot; ${briefData.target_date_formatted}`;
+
+        // Update Counts
+        const allActs = [
+          ...briefData.my_actions,
+          ...briefData.waiting_on_others,
+          ...briefData.unclear_ownership,
+        ];
+        const uniqueActs = Array.from(new Map(allActs.map(a => [a.action_id, a])).values());
+
+        const attentionCount = uniqueActs.filter(a => 
+          a.urgency_status === 'Overdue' || 
+          a.urgency_status === 'Due Today' ||
+          a.ownership_category === 'Unclear Ownership'
+        ).length;
+
+        // KPI Counts
+        document.getElementById('kpiAttentionNum').innerText = attentionCount;
+        document.getElementById('kpiMyActionsNum').innerText = briefData.my_actions.length;
+        document.getElementById('kpiWaitingNum').innerText = briefData.waiting_on_others.length;
+        document.getElementById('kpiUnclearNum').innerText = briefData.unclear_ownership.length;
+
+        // Tab Badges
+        document.getElementById('tabCountAttention').innerText = attentionCount;
+        document.getElementById('tabCountMyActions').innerText = briefData.my_actions.length;
+        document.getElementById('tabCountWaiting').innerText = briefData.waiting_on_others.length;
+        document.getElementById('tabCountUnclear').innerText = briefData.unclear_ownership.length;
+        document.getElementById('tabCountAll').innerText = uniqueActs.length;
+
+        // Calendar snippet
+        const schedEl = document.getElementById('scheduleSnippet');
+        if (briefData.calendar_events_today && briefData.calendar_events_today.length > 0) {
+          schedEl.innerHTML = `
+            <span style="color:var(--text-subtle);">Today's Schedule:</span>
+            ${briefData.calendar_events_today.map(e => `<span class="sched-tag">${e.time}: ${e.event}</span>`).join('')}
+          `;
+        } else {
+          schedEl.innerHTML = `<span style="color:var(--text-subtle);">No scheduled calendar events today.</span>`;
+        }
+
+        renderFeed();
+      } catch (err) {
+        console.error('Error fetching brief:', err);
+      }
+    }
+
+    // =========================================================
+    // 3. EVIDENCE MODE
+    // =========================================================
+    function openEvidence(actionId) {
+      if (!briefData) return;
+      const all = [
+        ...briefData.my_actions,
+        ...briefData.waiting_on_others,
+        ...briefData.unclear_ownership,
+      ];
+      const act = all.find(a => a.action_id === actionId);
+      if (!act) return;
+
+      document.getElementById('evModalTitle').innerText = act.title;
+      document.getElementById('evModalBadges').innerHTML = `
+        ${act.ownership_category === 'Unclear Ownership' ? '<span class="badge b-unclear">Unclear Ownership</span>' : ''}
+        ${getBadge(act.urgency_status)}
+      `;
+
+      document.getElementById('evModalDetails').innerHTML = `
+        <div><strong>Owner:</strong> ${act.owner}</div>
+        <div><strong>Counterparty:</strong> ${act.counterparty || 'N/A'}</div>
+        <div><strong>Deadline:</strong> ${act.reconciled_deadline_str}</div>
+        <div><strong>Category:</strong> ${act.ownership_category}</div>
+      `;
+
+      document.getElementById('evModalSummary').innerText = act.summary_of_progression;
+
+      const riskWrap = document.getElementById('evModalRiskWrap');
+      if (act.notes_or_risks) {
+        riskWrap.style.display = 'block';
+        document.getElementById('evModalRisk').innerText = act.notes_or_risks;
+      } else {
+        riskWrap.style.display = 'none';
+      }
+
+      const citList = document.getElementById('evModalCitations');
+      if (act.evidence_trail && act.evidence_trail.length > 0) {
+        citList.innerHTML = act.evidence_trail.map(e => `
+          <div class="citation-item">
+            <span class="cit-source">[${e.source_type}] ${e.source_label} (${e.timestamp_str})</span>
+            <span class="cit-quote">"${e.excerpt}"</span>
+          </div>
+        `).join('');
+      } else {
+        citList.innerHTML = `<div>No evidence items recorded.</div>`;
+      }
+
+      document.getElementById('evidenceModal').classList.add('active');
+    }
+
+    function openQaEvidence() {
+      if (!latestQaData || !latestQaData.evidence) return;
+      document.getElementById('evModalTitle').innerText = `Q&A Evidence: ${latestQaData.query}`;
+      document.getElementById('evModalBadges').innerHTML = `<span class="badge b-upcoming">Grounded Intent: ${latestQaData.matched_intent}</span>`;
+      document.getElementById('evModalDetails').innerHTML = `<div><strong>Grounded Query:</strong> ${latestQaData.query}</div>`;
+      document.getElementById('evModalSummary').innerText = latestQaData.answer;
+      document.getElementById('evModalRiskWrap').style.display = 'none';
+
+      const citList = document.getElementById('evModalCitations');
+      citList.innerHTML = latestQaData.evidence.map(e => `
+        <div class="citation-item">
+          <span class="cit-quote">${e}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('evidenceModal').classList.add('active');
+    }
+
+    function closeEvidence() {
+      document.getElementById('evidenceModal').classList.remove('active');
+    }
+
+    // Q&A Execution
+    function askChip(txt) {
+      document.getElementById('queryInput').value = txt;
+      runQuery();
+    }
+
+    async function runQuery() {
+      const q = document.getElementById('queryInput').value.trim();
+      if (!q) return;
+
+      showProcessingMode();
+
+      const box = document.getElementById('qaBoxAnswer');
+      const text = document.getElementById('qaAnswerText');
+      const evBtn = document.getElementById('qaEvidenceBtn');
+
+      box.style.display = 'block';
+      text.innerText = 'Evaluating grounded evidence...';
+      evBtn.style.display = 'none';
+
+      try {
+        const res = await fetch(`/api/ask`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q, date: currentDate }),
+        });
+        const ans = await res.json();
+        latestQaData = ans;
+
+        text.innerText = ans.answer;
+        if (ans.evidence && ans.evidence.length > 0) {
+          evBtn.style.display = 'inline-block';
+          evBtn.innerText = `View Evidence (${ans.evidence.length} sources) \u2192`;
+        }
+      } catch (err) {
+        text.innerText = 'Error running Q&A engine.';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      switchDate('2026-09-25');
+    });
+  </script>
+</body>
+</html>
